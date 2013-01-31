@@ -28,6 +28,7 @@
          "requires" : {
             "Carp" : "0",
             "POE::Filter" : "0",
+            "parent" : "0",
             "strictures" : "1"
          }
       }
@@ -35,7 +36,7 @@
    "provides" : {
       "POE::Filter::IRCv3" : {
          "file" : "lib/POE/Filter/IRCv3.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       }
    },
    "release_status" : "stable",
@@ -47,5 +48,5 @@
          "url" : "http://github.com/avenj/poe-filter-ircv3.git"
       }
    },
-   "version" : "0.01"
+   "version" : "0.02"
 }
