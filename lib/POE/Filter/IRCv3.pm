@@ -1,5 +1,7 @@
 package POE::Filter::IRCv3;
-our $VERSION = '0.02';
+{
+  $POE::Filter::IRCv3::VERSION = '0.03';
+}
 
 use strictures 1;
 use Carp;
@@ -46,6 +48,12 @@ my $irc_regex = qr/^
   $g->{'trailing_space'}
 $/x;
 
+
+=pod
+
+=for Pod::Coverage COLONIFY DEBUG BUFFER
+
+=cut
 
 sub COLONIFY () { 0 }
 sub DEBUG    () { 1 }
@@ -217,7 +225,8 @@ A L<POE::Filter> for IRC traffic derived from L<POE::Filter::IRCD>.
 Adds support for IRCv3.2 message tags.
 
 Like any proper L<POE::Filter>, there are no POE-specific bits involved 
-here; the filter can be used stand-alone to parse IRC traffic.
+here; the filter can be used stand-alone to parse IRC traffic (see
+L<IRC::Toolkit::Parser>).
 
 =head2 get_one_start, get_one, get_pending
 
@@ -233,7 +242,7 @@ See L</get>.
     ## See below for other keys available
   }
 
-Takes an ARRAY of raw lines and returns an ARRAY of hash references with 
+Takes an ARRAY of raw lines and returns an ARRAY of HASH-type references with 
 the following keys:
 
 =head3 command
@@ -262,7 +271,7 @@ Note that a tag can be present, but have an undefined value.
     ## Direct to socket, etc
   }
 
-Takes an ARRAY of hash references matching those described in L</get> 
+Takes an ARRAY of HASH-type references matching those described in L</get> 
 (documented above) and returns an ARRAY of raw IRC-formatted lines.
 
 =head3 colonify

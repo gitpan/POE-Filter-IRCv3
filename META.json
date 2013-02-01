@@ -1,10 +1,10 @@
 {
-   "abstract" : "POE::Filter::IRCD with experimental IRCv3 features",
+   "abstract" : "POE::Filter::IRCD with IRCv3.2 message tags",
    "author" : [
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
-   "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
+   "dynamic_config" : 0,
+   "generated_by" : "Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -14,39 +14,40 @@
    },
    "name" : "POE-Filter-IRCv3",
    "prereqs" : {
-      "build" : {
-         "requires" : {
-            "Test::More" : "0"
-         }
-      },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.38"
+            "ExtUtils::MakeMaker" : "6.30"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Pod::Coverage::TrustPod" : "0",
+            "Test::Pod" : "1.41",
+            "Test::Pod::Coverage" : "1.08"
          }
       },
       "runtime" : {
          "requires" : {
             "Carp" : "0",
             "POE::Filter" : "0",
-            "parent" : "0",
+            "perl" : "v5.8.9",
             "strictures" : "1"
          }
-      }
-   },
-   "provides" : {
-      "POE::Filter::IRCv3" : {
-         "file" : "lib/POE/Filter/IRCv3.pm",
-         "version" : "0.02"
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : "0.88"
+         }
       }
    },
    "release_status" : "stable",
    "resources" : {
-      "license" : [
-         "http://dev.perl.org/licenses/"
-      ],
       "repository" : {
-         "url" : "http://github.com/avenj/poe-filter-ircv3.git"
+         "type" : "git",
+         "url" : "git://github.com/avenj/poe-filter-ircv3.git",
+         "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.02"
+   "version" : "0.03"
 }
+

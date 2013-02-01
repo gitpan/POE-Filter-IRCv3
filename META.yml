@@ -1,28 +1,23 @@
 ---
-abstract: 'POE::Filter::IRCD with experimental IRCv3 features'
+abstract: 'POE::Filter::IRCD with IRCv3.2 message tags'
 author:
   - 'Jon Portnoy <avenj@cobaltirc.org>'
 build_requires:
-  Test::More: 0
+  Test::More: 0.88
 configure_requires:
-  Module::Build: 0.38
-dynamic_config: 1
-generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921'
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: POE-Filter-IRCv3
-provides:
-  POE::Filter::IRCv3:
-    file: lib/POE/Filter/IRCv3.pm
-    version: 0.02
 requires:
   Carp: 0
   POE::Filter: 0
-  parent: 0
+  perl: v5.8.9
   strictures: 1
 resources:
-  license: http://dev.perl.org/licenses/
-  repository: http://github.com/avenj/poe-filter-ircv3.git
-version: 0.02
+  repository: git://github.com/avenj/poe-filter-ircv3.git
+version: 0.03
