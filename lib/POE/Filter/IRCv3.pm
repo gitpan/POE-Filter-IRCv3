@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.03';
+  $POE::Filter::IRCv3::VERSION = '0.04';
 }
 
 use strictures 1;

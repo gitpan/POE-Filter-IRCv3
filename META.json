@@ -4,7 +4,7 @@
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300030, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -30,6 +30,7 @@
          "requires" : {
             "Carp" : "0",
             "POE::Filter" : "0",
+            "parent" : "0",
             "perl" : "v5.8.9",
             "strictures" : "1"
          }
@@ -48,6 +49,6 @@
          "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.03"
+   "version" : "0.04"
 }
 
