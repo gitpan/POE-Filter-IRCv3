@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.04';
+  $POE::Filter::IRCv3::VERSION = '0.040001';
 }
 
 use strictures 1;
@@ -157,9 +157,7 @@ sub put {
           $raw_line .= ' ';
       }
 
-      $raw_line .= ':' . $event->{prefix} . ' '
-        if exists $event->{prefix};
-
+      $raw_line .= ':' . $event->{prefix} . ' ' if $event->{prefix};
       $raw_line .= $event->{command};
 
       if ( ref $event->{params} eq 'ARRAY'
@@ -228,6 +226,14 @@ Like any proper L<POE::Filter>, there are no POE-specific bits involved
 here; the filter can be used stand-alone to parse IRC traffic (see
 L<IRC::Toolkit::Parser>).
 
+=head2 new
+
+Construct a new Filter; if the B<colonify> option is true, 
+the last parameter will always have a colon prepended.
+(This setting can also be retrieved or changed on-the-fly by calling 
+B<colonify> as a method, or changed for specific events by passing a 
+B<colonify> option via events passed to L</put>.)
+
 =head2 get_one_start, get_one, get_pending
 
 Implement the interface described in L<POE::Filter>.
@@ -281,7 +287,9 @@ specified for specific events. This controls whether or not the last
 parameter will be colon-prefixed even if it is a single word. (Yes, IRC is 
 woefully inconsistent ...)
 
-Defaults to boolean false (off).
+Specify as part of the event hash:
+
+  $filter->put([ { %event, colonify => 1 } ]);
 
 =head2 clone
 

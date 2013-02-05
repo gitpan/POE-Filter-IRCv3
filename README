@@ -29,6 +29,13 @@ DESCRIPTION
     here; the filter can be used stand-alone to parse IRC traffic (see
     IRC::Toolkit::Parser).
 
+  new
+    Construct a new Filter; if the colonify option is true, the last
+    parameter will always have a colon prepended. (This setting can also be
+    retrieved or changed on-the-fly by calling colonify as a method, or
+    changed for specific events by passing a colonify option via events
+    passed to "put".)
+
   get_one_start, get_one, get_pending
     Implement the interface described in POE::Filter.
 
@@ -74,7 +81,9 @@ DESCRIPTION
     parameter will be colon-prefixed even if it is a single word. (Yes, IRC
     is woefully inconsistent ...)
 
-    Defaults to boolean false (off).
+    Specify as part of the event hash:
+
+      $filter->put([ { %event, colonify => 1 } ]);
 
   clone
     Copy the filter object (with a cleared buffer).
