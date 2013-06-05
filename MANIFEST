@@ -6,6 +6,7 @@ META.yml
 Makefile.PL
 README
 README.mkdn
+bench/vs_poe_filter_ircd.pl
 dist.ini
 lib/POE/Filter/IRCv3.pm
 t/00-report-prereqs.t

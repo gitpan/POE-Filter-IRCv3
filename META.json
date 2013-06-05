@@ -1,5 +1,5 @@
 {
-   "abstract" : "POE IRC filter IRCv3.2 message tags",
+   "abstract" : "POE::Filter::IRCD with IRCv3.2 message tags",
    "author" : [
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
@@ -49,6 +49,6 @@
          "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.041000"
+   "version" : "0.041001"
 }
 

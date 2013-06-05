@@ -9,7 +9,7 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "POE IRC filter IRCv3.2 message tags",
+  "ABSTRACT" => "POE::Filter::IRCD with IRCv3.2 message tags",
   "AUTHOR" => "Jon Portnoy <avenj\@cobaltirc.org>",
   "BUILD_REQUIRES" => {},
   "CONFIGURE_REQUIRES" => {
@@ -28,7 +28,7 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "Test::More" => "0.88"
   },
-  "VERSION" => "0.041000",
+  "VERSION" => "0.041001",
   "test" => {
     "TESTS" => "t/*.t"
   }
