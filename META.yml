@@ -21,4 +21,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poe-filter-ircv3.git
-version: 0.042000
+version: 0.042001
