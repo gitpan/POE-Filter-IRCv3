@@ -6,12 +6,12 @@ META.yml
 Makefile.PL
 README
 README.mkdn
+bench/profile.pl
 bench/vs_poe_filter_ircd.pl
 dist.ini
 lib/POE/Filter/IRCv3.pm
 t/00-report-prereqs.t
-t/01_basic.t
-t/02_colonify.t
-t/03_with_tags.t
+t/basic.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t
+xt/regression.t

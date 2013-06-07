@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.041001';
+  $POE::Filter::IRCv3::VERSION = '0.042000';
 }
 
 use strictures 1;
@@ -8,65 +8,24 @@ use Carp;
 
 use parent 'POE::Filter';
 
-my $g = {
-  space           => qr/\x20+/o,
-  trailing_space  => qr/\x20*/o,
-};
-
-my $irc_regex = qr/^
-  (?:
-    \x40                # '@'-prefixed IRCv3.2 messsage tags.
-    (\S+)               # [tags] Semi-colon delimited key=value list
-    $g->{space}
-  )?
-  (?:
-    \x3a                #  : comes before hand
-    (\S+)               #  [prefix]
-    $g->{space}         #  Followed by a space
-  )?                    # but is optional.
-  (
-    \d{3}|[a-zA-Z]+     #  [command]
-  )                     # required.
-  (?:
-    $g->{space}         # Strip leading space off [middle]s
-    (                   # [middle]s
-      (?:
-        [^\x00\x0a\x0d\x20\x3a]
-        [^\x00\x0a\x0d\x20]*
-      )                 # Match on 1 of these,
-      (?:
-        $g->{space}
-        [^\x00\x0a\x0d\x20\x3a]
-        [^\x00\x0a\x0d\x20]*
-      )*                # then match as many of these as possible
-    )
-  )?                    # otherwise dont match at all.
-  (?:
-    $g->{space}\x3a     # Strip off leading spacecolon for [trailing]
-    ([^\x00\x0a\x0d]*)  # [trailing]
-  )?                    # [trailing] is not necessary.
-  $g->{'trailing_space'}
-$/x;
-
-
 =pod
 
-=for Pod::Coverage COLONIFY DEBUG BUFFER
+=for Pod::Coverage COLONIFY DEBUG BUFFER SPCHR
 
 =cut
 
 sub COLONIFY () { 0 }
 sub DEBUG    () { 1 }
 sub BUFFER   () { 2 }
-
+sub SPCHR    () { "\x20" }
 
 sub new {
   my ($class, %params) = @_;
   $params{uc $_} = delete $params{$_} for keys %params;
 
   my $self = [
-    $params{'COLONIFY'} || 0,
-    $params{'DEBUG'}    || 0,
+    ($params{'COLONIFY'} || 0),
+    ($params{'DEBUG'}    || 0),
     []  ## BUFFER
   ];
 
@@ -92,6 +51,7 @@ sub colonify {
   $self->[COLONIFY]
 }
 
+
 sub get_one_start {
   my ($self, $raw_lines) = @_;
   push @{ $self->[BUFFER] }, $_ for @$raw_lines;
@@ -102,41 +62,38 @@ sub get_pending {
   @{ $self->[BUFFER] } ? [ @{ $self->[BUFFER] } ] : ()
 }
 
+sub get {
+  my ($self, $raw_lines) = @_;
+  my @events;
+
+  for my $raw_line (@$raw_lines) {
+    warn "-> $raw_line \n" if $self->[DEBUG];
+    if (my $event = _parseline($raw_line)) {
+      push @events, $event;
+    } else {
+      carp "Received malformed IRC input: $raw_line";
+    }
+  }
+
+  \@events
+}
+
 sub get_one {
   my ($self) = @_;
-  my $events = [];
+  my @events;
 
   if (my $raw_line = shift @{ $self->[BUFFER] }) {
     warn "-> $raw_line \n" if $self->[DEBUG];
-
-    if ( my($tags, $prefix, $command, $middles, $trailing)
-       = $raw_line =~  m/$irc_regex/ ) {
-
-      my $event = { raw_line => $raw_line };
-
-      if ($tags) {
-        for my $tag_pair (split /;/, $tags) {
-          my ($thistag, $thisval) = split /=/, $tag_pair;
-          $event->{tags}->{$thistag} = $thisval
-        }
-      }
-
-      $event->{prefix}  = $prefix if $prefix;
-      $event->{command} = uc $command;
-
-      push @{ $event->{params} }, split(/$g->{space}/, $middles)
-        if defined $middles;
-      push @{ $event->{params} }, $trailing
-        if defined $trailing;
-
-      push @$events, $event;
+    if (my $event = _parseline($raw_line)) {
+      push @events, $event;
     } else {
       warn "Received malformed IRC input: $raw_line\n";
     }
   }
 
-  $events
+  \@events
 }
+
 
 sub put {
   my ($self, $events) = @_;
@@ -187,6 +144,75 @@ sub put {
   $raw_lines
 }
 
+
+sub _parseline {
+  my ($raw_line) = @_;
+  my %event = ( raw_line => $raw_line );
+
+  my $pos = 0;
+
+  use bytes;
+
+  if ( substr($raw_line, $pos, 1) eq '@' ) {
+    my $nextsp = index $raw_line, SPCHR, $pos;
+    return unless $nextsp > 0;
+    for my $tag_pair 
+      ( split /;/, substr $raw_line, ($pos + 1), ($nextsp - 1) ) {
+          my ($thistag, $thisval) = split /=/, $tag_pair;
+          $event{tags}->{$thistag} = $thisval
+    }
+    $pos = $nextsp;
+  }
+
+  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
+    ++$pos
+  }
+
+  if ( substr($raw_line, $pos, 1) eq ':' ) {
+    my $nextsp = index $raw_line, SPCHR, $pos;
+    return unless $nextsp > 0;
+    $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1);
+    $pos = $nextsp;
+  }
+
+  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
+    ++$pos
+  }
+
+  my $nextsp_maybe = index $raw_line, SPCHR, $pos;
+  if ($nextsp_maybe == -1) {
+    $event{command} = uc( substr($raw_line, $pos) );
+    return \%event
+  }
+
+  $event{command} = uc( 
+    substr($raw_line, $pos, ($nextsp_maybe - $pos) )
+  );
+  $pos = $nextsp_maybe;
+
+  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
+    $pos++
+  }
+
+  my $remains = substr $raw_line, $pos;
+  PARAM: while (defined $remains) {
+    if ( index($remains, ':') == 0 ) {
+      push @{ $event{params} }, substr $remains, 1;
+      last PARAM
+    }
+    if ( (my $space = index $remains, SPCHR) == -1) {
+      push @{ $event{params} }, $remains;
+      last PARAM
+    } else {
+      push @{ $event{params} }, substr $remains, 0, $space;
+      $remains = substr $remains, ($space + 1)
+    }
+  }
+
+  \%event
+}
+
+
 1;
 
 
@@ -194,36 +220,41 @@ sub put {
 
 =head1 NAME
 
-POE::Filter::IRCv3 - POE::Filter::IRCD with IRCv3.2 message tags
+POE::Filter::IRCv3 - IRC parser with message tag support
 
 =head1 SYNOPSIS
 
   my $filter = IRC::Server::Pluggable::IRC::Filter->new(colonify => 1);
 
-  ## Raw lines parsed to hashes:
+  # Raw lines parsed to hashes:
   my $array_of_refs  = $filter->get( [ $line1, $line ... ] );
 
-  ## Hashes deparsed to raw lines:
+  # Hashes deparsed to raw lines:
   my $array_of_lines = $filter->put( [ \%hash1, \%hash2 ... ] );
 
-  ## Stacked with a line filter, suitable for Wheel usage, etc:
+
+  # Stacked with a line filter, suitable for Wheel usage, etc:
+
   my $ircd = IRC::Server::Pluggable::IRC::Filter->new(colonify => 1);
+
   my $line = POE::Filter::Line->new(
     InputRegexp   => '\015?\012',
     OutputLiteral => "\015\012",
   );
+
   my $filter = POE::Filter::Stackable->new(
     Filters => [ $line, $ircd ],
   );
 
 =head1 DESCRIPTION
 
-A L<POE::Filter> for IRC traffic derived from L<POE::Filter::IRCD>.
+A L<POE::Filter> for IRC traffic with support for IRCv3.2 message tags.
 
-Adds support for IRCv3.2 message tags.
+Does not rely on regular expressions for parsing, unlike many of its
+counterparts; benchmarks show this approach is slightly faster on most strings.
 
 Like any proper L<POE::Filter>, there are no POE-specific bits involved 
-here; the filter can be used stand-alone to parse IRC traffic (see
+here -- the filter can be used stand-alone to parse lines of IRC traffic (see
 L<IRC::Toolkit::Parser>).
 
 =head2 new
@@ -301,14 +332,16 @@ Turn on/off debug output.
 
 =head1 AUTHOR
 
-Derived from L<POE::Filter::IRCD>, which is copyright Chris Williams and 
-Jonathan Steinert.
+Jon Portnoy <avenj@cobaltirc.org>
 
-Adapted with IRCv3 extensions and other tweaks by Jon Portnoy <avenj@cobaltirc.org>
+Licensed under the same terms as Perl.
 
-This module may be used, modified, and distributed under the same terms as 
-Perl itself. 
-Please see the license that came with your Perl distribution for details.
+Original implementations were derived from L<POE::Filter::IRCD>, 
+which is copyright Chris Williams and Jonathan Steinert. This codebase has
+diverged significantly.
+
+Major thanks to the C<#ircv3> crew on irc.atheme.org, especially C<Aerdan> and
+C<grawity>, for various bits of inspiration.
 
 =head1 SEE ALSO
 

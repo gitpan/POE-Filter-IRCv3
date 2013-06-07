@@ -1,5 +1,5 @@
 ---
-abstract: 'POE::Filter::IRCD with IRCv3.2 message tags'
+abstract: 'IRC parser with message tag support'
 author:
   - 'Jon Portnoy <avenj@cobaltirc.org>'
 build_requires:
@@ -21,4 +21,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poe-filter-ircv3.git
-version: 0.041001
+version: 0.042000
