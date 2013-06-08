@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.042001';
+  $POE::Filter::IRCv3::VERSION = '0.042002';
 }
 
 use strictures 1;
@@ -156,7 +156,10 @@ sub _parseline {
 
   my $pos = 0;
 
+  no warnings 'substr';
+
   if ( substr($raw_line, $pos, 1) eq '@' ) {
+    # Have tags.
     my $nextsp = index $raw_line, SPCHR, $pos;
     return unless $nextsp > 0;
     for my $tag_pair 
@@ -164,7 +167,7 @@ sub _parseline {
           my ($thistag, $thisval) = split /=/, $tag_pair;
           $event{tags}->{$thistag} = $thisval
     }
-    $pos = $nextsp;
+    $pos = $nextsp + 1;
   }
 
   while ( substr($raw_line, $pos, 1) eq SPCHR ) {
@@ -175,7 +178,7 @@ sub _parseline {
     my $nextsp = index $raw_line, SPCHR, $pos;
     return unless $nextsp > 0;
     $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1);
-    $pos = $nextsp;
+    $pos = $nextsp + 1;
   }
 
   while ( substr($raw_line, $pos, 1) eq SPCHR ) {
@@ -184,21 +187,23 @@ sub _parseline {
 
   my $nextsp_maybe = index $raw_line, SPCHR, $pos;
   if ($nextsp_maybe == -1) {
-    $event{command} = uc( substr($raw_line, $pos) );
+    # No more spaces; do we have anything..?
+    my $cmd = substr $raw_line, $pos;
+    $event{command} = uc( length $cmd ? $cmd : return );
     return \%event
   }
 
   $event{command} = uc( 
     substr($raw_line, $pos, ($nextsp_maybe - $pos) )
   );
-  $pos = $nextsp_maybe;
+  $pos = $nextsp_maybe + 1;
 
   while ( substr($raw_line, $pos, 1) eq SPCHR ) {
     $pos++
   }
 
   my $remains = substr $raw_line, $pos;
-  PARAM: while (defined $remains) {
+  PARAM: while (defined $remains and length $remains) {
     if ( index($remains, ':') == 0 ) {
       push @{ $event{params} }, substr $remains, 1;
       last PARAM
@@ -226,7 +231,7 @@ no bytes;
 
 =head1 NAME
 
-POE::Filter::IRCv3 - IRC parser with message tag support
+POE::Filter::IRCv3 - IRCv3.2 parser without regular expressions
 
 =head1 SYNOPSIS
 

@@ -1,5 +1,5 @@
 {
-   "abstract" : "IRC parser with message tag support",
+   "abstract" : "IRCv3.2 parser without regular expressions",
    "author" : [
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
@@ -49,6 +49,6 @@
          "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.042001"
+   "version" : "0.042002"
 }
 

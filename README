@@ -1,5 +1,5 @@
 NAME
-    POE::Filter::IRCv3 - IRC parser with message tag support
+    POE::Filter::IRCv3 - IRCv3.2 parser without regular expressions
 
 SYNOPSIS
       my $filter = IRC::Server::Pluggable::IRC::Filter->new(colonify => 1);
