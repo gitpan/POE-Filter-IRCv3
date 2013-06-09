@@ -37,6 +37,8 @@
       },
       "test" : {
          "requires" : {
+            "Scalar::Util" : "0",
+            "Test::Deep" : "0",
             "Test::More" : "0.88"
          }
       }
@@ -49,6 +51,6 @@
          "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.042003"
+   "version" : "0.043000"
 }
 

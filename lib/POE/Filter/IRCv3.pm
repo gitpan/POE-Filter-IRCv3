@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.042003';
+  $POE::Filter::IRCv3::VERSION = '0.043000';
 }
 
 use strictures 1;
@@ -151,15 +151,12 @@ sub put {
 
 
 sub _parseline {
-  my ($raw_line) = @_;
+  my $raw_line = $_[0];
   my %event = ( raw_line => $raw_line );
-
   my $pos = 0;
-
   no warnings 'substr';
 
-  if ( substr($raw_line, $pos, 1) eq '@' ) {
-    # Have tags.
+  if ( substr($raw_line, 0, 1) eq '@' ) {
     my $nextsp = index $raw_line, SPCHR, $pos;
     return unless $nextsp > 0;
     for my $tag_pair 
@@ -170,19 +167,14 @@ sub _parseline {
     $pos = $nextsp + 1;
   }
 
-  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
-    ++$pos
-  }
+  $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
 
   if ( substr($raw_line, $pos, 1) eq ':' ) {
     my $nextsp = index $raw_line, SPCHR, $pos;
     return unless $nextsp > 0;
     $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1);
     $pos = $nextsp + 1;
-  }
-
-  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
-    ++$pos
+    $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
   }
 
   my $nextsp_maybe = index $raw_line, SPCHR, $pos;
@@ -198,9 +190,7 @@ sub _parseline {
   );
   $pos = $nextsp_maybe + 1;
 
-  while ( substr($raw_line, $pos, 1) eq SPCHR ) {
-    $pos++
-  }
+  $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
 
   my $remains = substr $raw_line, $pos;
   PARAM: while (defined $remains and length $remains) {
@@ -213,7 +203,8 @@ sub _parseline {
       last PARAM
     } else {
       push @{ $event{params} }, substr $remains, 0, $space;
-      $remains = substr $remains, ($space + 1)
+      $remains = substr $remains, ($space + 1);
+      $remains = substr($remains, 1) while substr($remains, 0, 1) eq SPCHR;
     }
   }
 
@@ -238,22 +229,47 @@ POE::Filter::IRCv3 - IRCv3.2 parser without regular expressions
   my $filter = POE::Filter::IRCv3->new(colonify => 1);
 
   # Raw lines parsed to hashes:
-  my $array_of_refs  = $filter->get( [ $line1, $line ... ] );
+  my $array_of_refs  = $filter->get( 
+    [ 
+      ':prefix COMMAND foo :bar',
+      '@foo=bar;baz :prefix COMMAND foo :bar',
+    ]
+  );
 
   # Hashes deparsed to raw lines:
-  my $array_of_lines = $filter->put( [ \%hash1, \%hash2 ... ] );
+  my $array_of_lines = $filter->put( 
+    [
+      {
+        prefix  => 'prefix',
+        command => 'COMMAND',
+        params  => [
+          'foo',
+          'bar'
+        ],
+      },
+      {
+        prefix  => 'prefix',
+        command => 'COMMAND',
+        params  => [
+          'foo',
+          'bar'
+        ],
+        tags => {
+          foo => 'bar',
+          baz => undef,
+        },
+      },
+    ] 
+  );
 
 
   # Stacked with a line filter, suitable for Wheel usage, etc:
-
   my $ircd = POE::Filter::IRCv3->new(colonify => 1);
-
   my $line = POE::Filter::Line->new(
     InputRegexp   => '\015?\012',
     OutputLiteral => "\015\012",
   );
-
-  my $filter = POE::Filter::Stackable->new(
+  my $stacked = POE::Filter::Stackable->new(
     Filters => [ $line, $ircd ],
   );
 
@@ -264,8 +280,8 @@ A L<POE::Filter> for IRC traffic with support for IRCv3.2 message tags.
 Does not rely on regular expressions for parsing, unlike many of its
 counterparts; benchmarks show this approach is slightly faster on most strings.
 
-Like any proper L<POE::Filter>, there are no POE-specific bits involved 
-here -- the filter can be used stand-alone to parse lines of IRC traffic (see
+Like any proper L<POE::Filter>, there are no POE-specific bits involved here
+-- the filter can be used stand-alone to parse lines of IRC traffic (also see
 L<IRC::Toolkit::Parser>).
 
 =head2 new

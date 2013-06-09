@@ -13,6 +13,8 @@ my @modules = qw(
   Carp
   ExtUtils::MakeMaker
   POE::Filter
+  Scalar::Util
+  Test::Deep
   Test::More
   parent
   perl

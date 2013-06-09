@@ -11,10 +11,12 @@ bench/vs_poe_filter_ircd.pl
 dist.ini
 lib/POE/Filter/IRCv3.pm
 t/00-report-prereqs.t
-t/basic.t
+t/inc/TestFilterHelpers.pm
+t/parser.t
 t/release-no-tabs.t
 t/release-pod-coverage.t
 t/release-pod-linkcheck.t
 t/release-pod-syntax.t
+t/release-synopsis.t
 t/release-unused-vars.t
 xt/regression.t

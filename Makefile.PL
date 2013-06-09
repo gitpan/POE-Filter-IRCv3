@@ -26,9 +26,11 @@ my %WriteMakefileArgs = (
     "strictures" => 1
   },
   "TEST_REQUIRES" => {
+    "Scalar::Util" => 0,
+    "Test::Deep" => 0,
     "Test::More" => "0.88"
   },
-  "VERSION" => "0.042003",
+  "VERSION" => "0.043000",
   "test" => {
     "TESTS" => "t/*.t"
   }
