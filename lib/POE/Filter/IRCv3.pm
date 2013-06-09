@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.043000';
+  $POE::Filter::IRCv3::VERSION = '0.044000';
 }
 
 use strictures 1;
@@ -21,15 +21,13 @@ sub SPCHR    () { "\x20" }
 
 sub new {
   my ($class, %params) = @_;
-  $params{uc $_} = delete $params{$_} for keys %params;
+  $params{uc $_} = $params{$_} for keys %params;
 
-  my $self = [
+  bless [
     ($params{'COLONIFY'} || 0),
     ($params{'DEBUG'}    || 0),
     []  ## BUFFER
-  ];
-
-  bless $self, $class;
+  ], $class
 }
 
 sub clone {
@@ -156,11 +154,16 @@ sub _parseline {
   my $pos = 0;
   no warnings 'substr';
 
+  ## We cheat a little; the spec is fuzzy when it comes to CR, LF, and NUL
+  ## bytes. Theoretically they're not allowed inside messages, but
+  ## that's really an implementation detail (and the spec agrees).
+  ## We just stick to SPCHR (\x20) here.
+
   if ( substr($raw_line, 0, 1) eq '@' ) {
-    my $nextsp = index $raw_line, SPCHR, $pos;
+    my $nextsp = index $raw_line, SPCHR;
     return unless $nextsp > 0;
     for my $tag_pair 
-      ( split /;/, substr $raw_line, ($pos + 1), ($nextsp - 1) ) {
+      ( split /;/, substr $raw_line, 1, ($nextsp - 1) ) {
           my ($thistag, $thisval) = split /=/, $tag_pair;
           $event{tags}->{$thistag} = $thisval
     }
@@ -171,8 +174,9 @@ sub _parseline {
 
   if ( substr($raw_line, $pos, 1) eq ':' ) {
     my $nextsp = index $raw_line, SPCHR, $pos;
-    return unless $nextsp > 0;
-    $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1);
+    $nextsp > 0 and length( 
+      $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1)
+    ) or return;
     $pos = $nextsp + 1;
     $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
   }
@@ -193,7 +197,7 @@ sub _parseline {
   $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
 
   my $remains = substr $raw_line, $pos;
-  PARAM: while (defined $remains and length $remains) {
+  PARAM: while (defined $remains && length $remains) {
     if ( index($remains, ':') == 0 ) {
       push @{ $event{params} }, substr $remains, 1;
       last PARAM
@@ -207,6 +211,27 @@ sub _parseline {
       $remains = substr($remains, 1) while substr($remains, 0, 1) eq SPCHR;
     }
   }
+
+## This is one way to do it without consuming the rest of the string,
+## but the string-consuming method above wins on performance on
+## most common IRC strings (which typically have few params)
+##
+#  PARAM: while ( $pos < length $raw_line ) {
+#    ++$pos while substr($raw_line, $pos, 1) eq SPCHR;
+#    if (substr($raw_line, $pos, 1) eq ':') {
+#      push @{ $event{params} }, substr $raw_line, ($pos + 1);
+#      last PARAM
+#    }
+#    my $space = index $raw_line, SPCHR, $pos;
+#    if ($space == -1) {
+#      push @{ $event{params} }, substr $raw_line, $pos;
+#      last PARAM
+#    } else {
+#      push @{ $event{params} }, substr $raw_line, $pos, ($space - $pos);
+#      $pos = $space + 1;
+#      next PARAM
+#    }
+#  }
 
   \%event
 }

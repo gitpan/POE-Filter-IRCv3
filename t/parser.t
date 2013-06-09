@@ -5,18 +5,22 @@ use TestFilterHelpers;
 
 BEGIN { use_ok('POE::Filter::IRCv3') }
 
+my $show = shift @ARGV;
+
 our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # clone
 { my $clone = $filter->clone;
-  isa_ok $clone, ref $filter;
+  isa_ok $clone, ref $filter, 'cloned obj';
   ok $clone->colonify, 
     'cloned obj preserved colonify => 1';
 }
 
 # get_one_start/get_one
 { my $line = ':test foo';
-    $filter->get_one_start([ ':test foo' ]);
+  warn "# >> '", $line, "'\n" if $show;
+
+    $filter->get_one_start([ $line ]);
     my $ev = $filter->get_one;
     is_deeply( $ev,
       [
@@ -32,6 +36,8 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Simple prefix + command
 { my $line = ':test foo';
+  warn "# >> '", $line, "'\n" if $show;
+
     get_ok $filter, $line =>
       +{
           raw_line => $line,
@@ -47,6 +53,8 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Simple prefix + command with trailing spaces
 { my $line = ':test foo   ';
+  warn "# >> '", $line, "'\n" if $show;
+
     my $ev = get_ok $filter, $line =>
       +{
           raw_line => $line,
@@ -61,6 +69,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Prefix, command, one middle param, trailing params
 { my $line = ':test!me@test.ing PRIVMSG #Test :This is a test';
+  warn "# >> '", $line, "'\n" if $show;
 
     my $ev = get_ok $filter, $line =>
       +{
@@ -80,6 +89,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Commands containing tabs
 { my $line = ":test FOO\tBAR baz quux :A string";
+  warn "# >> '", $line, "'\n" if $show;
   
     my $ev = get_ok $filter, $line =>
       +{
@@ -98,6 +108,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Middle params containing tabs
 { my $line = ":test JOIN #foo\tbar :baz";
+  warn "# >> '", $line, "'\n" if $show;
 
     my $ev = get_ok $filter, $line =>
       +{
@@ -116,6 +127,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Middle params containing colons
 { my $line = ':test PRIVMSG #fo:oo :This is a test';
+  warn "# >> '", $line, "'\n" if $show;
   
     my $ev = get_ok $filter, $line =>
       +{
@@ -134,6 +146,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # No prefix, command, one middle param, trailing params
 { my $line = 'PRIVMSG #foo :No prefix test';
+  warn "# >> '", $line, "'\n" if $show;
 
     my $ev = get_ok $filter, $line =>
       +{
@@ -151,6 +164,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Prefix, command, one middle param, trailing params with extra spaces
 { my $line = ':test PRIVMSG foo :A string   with spaces   ';
+  warn "# >> '", $line, "'\n" if $show;
 
     my $ev = get_ok $filter, $line =>
       +{
@@ -169,6 +183,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Extraneous spaces between prefix/command/params
 { my $line = ':test   PRIVMSG   foo   :bar';
+  warn "# >> '", $line, "'\n" if $show;
   
     my $ev = get_ok $filter, $line =>
       +{
@@ -185,9 +200,29 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
       'extraneous space in command/params put() ok';
 }
 
+# Extraneous spaces, no trailing
+{ my $line = 'FOO  bar   baz   quux';
+  warn "# >> '", $line, "'\n" if $show;
+
+    my $ev = get_ok $filter, $line =>
+      +{
+          raw_line => $line,
+          command  => 'FOO',
+          params   => [
+            'bar', 'baz', 'quux'
+          ],
+      },
+      'extraneous space in commands without trailing get() ok';
+
+    put_ok $filter, "FOO bar baz :quux" => $ev,
+      'extraneous space in commands without trailing put() ok';
+}
+
 # Tags, no prefix
 { my $line = '@foo=bar;znc.in/ext=val;baz'
             .' PRIVMSG #chan :A string';
+
+  warn "# >> '", $line, "'\n" if $show;
   
     get_command_ok $filter, $line => 'PRIVMSG',
       'tags without prefix command ok';
@@ -230,6 +265,8 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 # Tags with prefix
 { my $line = '@foo=bar;znc.in/ext=val;baz'
             .' :test PRIVMSG #chan :A string';
+
+  warn "# >> '", $line, "'\n" if $show;
 
     get_prefix_ok $filter, $line => 'test',
       'tags with prefix prefix ok';
@@ -345,6 +382,17 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
     'line with tags and prefix only returned';
   ok $warned, 
     'line with tags and prefix only warned';
+}
+{ my $line = ': foo';
+
+  my $warned;
+  local $SIG{__WARN__} = sub { ++$warned };
+  my ($ev) = @{ $filter->get([ $line ]) };
+  ok !$ev,
+    'line with bad prefix returned'
+      or diag explain $ev;
+  ok $warned,
+    'line with bad prefix warned';
 }
 
 done_testing;
