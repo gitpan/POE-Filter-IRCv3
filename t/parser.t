@@ -218,6 +218,56 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
       'extraneous space in commands without trailing put() ok';
 }
 
+# Empty tags, no prefix
+{ my $line = '@ foo bar';
+
+    get_ok $filter, $line =>  
+      +{
+          raw_line => $line,
+          command  => 'FOO',
+          params   => [ 'bar' ],
+      },
+      'empty tags without prefix get() ok';
+}
+
+# Empty tags, prefix
+{ my $line = '@ :foo bar baz quux';
+
+    get_ok $filter, $line =>
+      +{
+          raw_line => $line,
+          command  => 'BAR',
+          params   => [ 'baz', 'quux' ],
+          prefix   => 'foo',
+      },
+      'empty tags with prefix get() ok';
+}
+
+# Empty tags, no prefix, extraneous space
+{ my $line = '@   foo bar';
+
+    get_ok $filter, $line =>
+      +{
+          raw_line => $line,
+          command  => 'FOO',
+          params   => [ 'bar' ],
+      },
+      'empty tags with extraneous space and no prefix get() ok';
+}
+
+# Empty tags, prefix, extraneous space
+{ my $line = '@   :foo bar baz';
+
+    get_ok $filter, $line =>
+      +{
+          raw_line => $line,
+          command  => 'BAR',
+          params   => [ 'baz' ],
+          prefix   => 'foo',
+      },
+      'empty tags with extraneous space and prefix get() ok';
+}
+
 # Tags, no prefix
 { my $line = '@foo=bar;znc.in/ext=val;baz'
             .' PRIVMSG #chan :A string';
@@ -307,7 +357,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
 # Params containing arbitrary bytes
 { use bytes;
-  my $line = ":foo PRIVMSG #f\x{df}\x{de}oo\707\0";
+  my $line = ":foo PRIVMSG #f\303\202\203\240oo\707\0";
 
   get_prefix_ok $filter, $line => 'foo',
     'arbitrary bytes prefix ok';
@@ -320,7 +370,7 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
   ok @{$ev->{params}} == 1, 
     'arbitrary bytes param count ok';
 
-  ok $ev->{params}->[0] eq "#f\x{df}\x{de}oo\707\0",
+  ok $ev->{params}->[0] eq "#f\303\202\203\240oo\707\0",
     'arbitrary bytes params ok';
 
   $ev->{colonify} = 0;
@@ -367,7 +417,6 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
   
   my $warned;
   local $SIG{__WARN__} = sub { ++$warned };
-
   ok !@{$filter->get([ $line ])}, 
     'line with prefix only returned';
   ok $warned, 
@@ -377,7 +426,6 @@ our $filter = new_ok( 'POE::Filter::IRCv3' => [ colonify => 1 ] );
 
   my $warned;
   local $SIG{__WARN__} = sub { ++$warned };
-
   ok !@{$filter->get([ $line ])}, 
     'line with tags and prefix only returned';
   ok $warned, 
