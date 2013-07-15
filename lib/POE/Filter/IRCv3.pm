@@ -1,6 +1,6 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.045000';
+  $POE::Filter::IRCv3::VERSION = '0.045001';
 }
 
 use strictures 1;
@@ -104,9 +104,8 @@ sub put {
     if ( ref $event eq 'HASH' ) {
       my $raw_line;
 
-      if ( ref $event->{tags} eq 'HASH' && keys %{ $event->{tags} } ) {
+      if ( $event->{tags} && (my @tags = %{ $event->{tags} }) ) {
           $raw_line .= '@';
-          my @tags = %{ $event->{tags} };
           while (my ($thistag, $thisval) = splice @tags, 0, 2) {
             $raw_line .= $thistag . ( defined $thisval ? '='.$thisval : '' );
             $raw_line .= ';' if @tags;
@@ -117,8 +116,7 @@ sub put {
       $raw_line .= ':' . $event->{prefix} . ' ' if $event->{prefix};
       $raw_line .= $event->{command};
 
-      if ( ref $event->{params} eq 'ARRAY'
-        && (my @params = @{ $event->{params} }) ) {
+      if ( $event->{params} && (my @params = @{ $event->{params} }) ) {
           $raw_line .= ' ';
           my $param = shift @params;
           while (@params) {
@@ -159,8 +157,8 @@ sub _parseline {
   ## We just stick to SPCHR (\x20) here.
 
   if ( substr($raw_line, 0, 1) eq '@' ) {
-    my $nextsp = index $raw_line, SPCHR;
-    return unless $nextsp > 0;
+    return unless (my $nextsp = index($raw_line, SPCHR)) > 0;
+    # Tag parser cheats; split takes a pattern:
     for my $tag_pair 
       ( split /;/, substr $raw_line, 1, ($nextsp - 1) ) {
           my ($thistag, $thisval) = split /=/, $tag_pair;
@@ -172,16 +170,16 @@ sub _parseline {
   $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
 
   if ( substr($raw_line, $pos, 1) eq ':' ) {
-    my $nextsp = index $raw_line, SPCHR, $pos;
-    $nextsp > 0 and length( 
-      $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1)
+    my $nextsp;
+    ($nextsp = index $raw_line, SPCHR, $pos) > 0 and length(
+        $event{prefix} = substr $raw_line, ($pos + 1), ($nextsp - $pos - 1)
     ) or return;
     $pos = $nextsp + 1;
     $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
   }
 
-  my $nextsp_maybe = index $raw_line, SPCHR, $pos;
-  if ($nextsp_maybe == -1) {
+  my $nextsp_maybe;
+  if (($nextsp_maybe = index $raw_line, SPCHR, $pos) == -1) {
     # No more spaces; do we have anything..?
     my $cmd = substr $raw_line, $pos;
     $event{command} = uc( length $cmd ? $cmd : return );
@@ -201,38 +199,16 @@ sub _parseline {
       push @{ $event{params} }, substr $raw_line, ($pos + 1);
       last PARAM
     }
-    my $space = index $raw_line, SPCHR, $pos;
-    if ($space == -1) {
+    if ((my $nextsp = index $raw_line, SPCHR, $pos) == -1) {
       push @{ $event{params} }, substr $raw_line, $pos;
       last PARAM
     } else {
-      push @{ $event{params} }, substr $raw_line, $pos, ($space - $pos);
-      $pos = $space + 1;
-      ++$pos while substr($raw_line, $pos, 1) eq SPCHR;
+      push @{ $event{params} }, substr $raw_line, $pos, ($nextsp - $pos);
+      $pos = $nextsp + 1;
+      $pos++ while substr($raw_line, $pos, 1) eq SPCHR;
       next PARAM
     }
   }
-
-## The string-consuming approach below benches slightly faster on the most
-## common types of IRC strings (few middle params, one long trailing param).
-## It also benches noticably slower on lots of middle params.
-## Tradeoffs and dilemmas . . .
-#
-#  my $remains = substr $raw_line, $pos;
-#  PARAM: while (defined $remains && length $remains) {
-#    if ( index($remains, ':') == 0 ) {
-#      push @{ $event{params} }, substr $remains, 1;
-#      last PARAM
-#    }
-#    if ( (my $space = index $remains, SPCHR) == -1) {
-#      push @{ $event{params} }, $remains;
-#      last PARAM
-#    } else {
-#      push @{ $event{params} }, substr $remains, 0, $space;
-#      $remains = substr $remains, ($space + 1);
-#      $remains = substr($remains, 1) while substr($remains, 0, 1) eq SPCHR;
-#    }
-#  }
 
   \%event
 }
@@ -241,7 +217,10 @@ sub _parseline {
 no bytes;
 
 
-1;
+print
+  qq[<mst> let's try this again -without- the part where we beat you to],
+  qq[ death with a six foot plush toy of sexual harassment panda\n ]
+unless caller; 1;
 
 
 =pod
