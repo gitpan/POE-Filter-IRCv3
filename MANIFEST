@@ -13,6 +13,7 @@ lib/POE/Filter/IRCv3.pm
 t/00-report-prereqs.t
 t/inc/TestFilterHelpers.pm
 t/parser.t
+t/release-cpan-changes.t
 t/release-no-tabs.t
 t/release-pod-coverage.t
 t/release-pod-linkcheck.t
