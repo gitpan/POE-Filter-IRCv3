@@ -21,7 +21,6 @@ my %WriteMakefileArgs = (
   "NAME" => "POE::Filter::IRCv3",
   "PREREQ_PM" => {
     "Carp" => 0,
-    "POE::Filter" => 0,
     "parent" => 0,
     "strictures" => 1
   },
@@ -30,7 +29,7 @@ my %WriteMakefileArgs = (
     "Test::Deep" => 0,
     "Test::More" => "0.88"
   },
-  "VERSION" => "0.045002",
+  "VERSION" => "0.045003",
   "test" => {
     "TESTS" => "t/*.t"
   }

@@ -11,7 +11,9 @@ bench/vs_poe_filter_ircd.pl
 dist.ini
 lib/POE/Filter/IRCv3.pm
 t/00-report-prereqs.t
+t/from_yaml.t
 t/inc/TestFilterHelpers.pm
+t/inc/ircbasic.yml
 t/parser.t
 t/release-cpan-changes.t
 t/release-no-tabs.t
