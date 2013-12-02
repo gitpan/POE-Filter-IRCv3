@@ -60,6 +60,10 @@ DESCRIPTION
     here -- the filter can be used stand-alone to parse lines of IRC traffic
     (also see IRC::Toolkit::Parser).
 
+    In fact, you do not need POE installed -- if POE::Filter is not
+    available, it is left out of @ISA and the filter will continue working
+    normally.
+
   new
     Construct a new Filter; if the colonify option is true, the last
     parameter will always have a colon prepended. (This setting can also be
@@ -139,6 +143,8 @@ AUTHOR
     and "grawity", for various bits of inspiration.
 
 SEE ALSO
+    IRC::Message::Object
+
     POE::Filter
 
     POE::Filter::IRCD

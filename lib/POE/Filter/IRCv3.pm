@@ -1,9 +1,8 @@
 package POE::Filter::IRCv3;
 {
-  $POE::Filter::IRCv3::VERSION = '0.045003';
+  $POE::Filter::IRCv3::VERSION = '0.045004';
 }
-
-use strictures 1;
+use strict; use warnings FATAL => 'all';
 use Carp;
 
 BEGIN {
@@ -67,7 +66,7 @@ sub get {
   my @events;
   for my $raw_line (@{ $_[1] }) {
     warn " >> '$raw_line'\n" if $_[0]->[DEBUG];
-    if (my $event = _parseline($raw_line)) {
+    if ( my $event = _parseline($raw_line) ) {
       push @events, $event;
     } else {
       carp "Received malformed IRC input: $raw_line";
@@ -79,9 +78,9 @@ sub get {
 sub get_one {
   my ($self) = @_;
   my @events;
-  if (my $raw_line = shift @{ $self->[BUFFER] }) {
+  if ( my $raw_line = shift @{ $self->[BUFFER] } ) {
     warn " >> '$raw_line'\n" if $self->[DEBUG];
-    if (my $event = _parseline($raw_line)) {
+    if ( my $event = _parseline($raw_line) ) {
       push @events, $event;
     } else {
       warn "Received malformed IRC input: $raw_line\n";
@@ -178,7 +177,7 @@ sub _parseline {
   }
 
   my $nextsp_maybe;
-  if (($nextsp_maybe = index $raw_line, SPCHR, $pos) == -1) {
+  if ( ($nextsp_maybe = index $raw_line, SPCHR, $pos) == -1 ) {
     # No more spaces; do we have anything..?
     my $cmd = substr $raw_line, $pos;
     $event{command} = uc( length $cmd ? $cmd : return );
@@ -194,11 +193,11 @@ sub _parseline {
 
   my $maxlen = length $raw_line;
   PARAM: while ( $pos < $maxlen ) {
-    if (substr($raw_line, $pos, 1) eq ':') {
+    if ( substr($raw_line, $pos, 1) eq ':' ) {
       push @{ $event{params} }, substr $raw_line, ($pos + 1);
       last PARAM
     }
-    if ((my $nextsp = index $raw_line, SPCHR, $pos) == -1) {
+    if ( (my $nextsp = index $raw_line, SPCHR, $pos) == -1 ) {
       push @{ $event{params} }, substr $raw_line, $pos;
       last PARAM
     } else {
@@ -286,7 +285,11 @@ counterparts; benchmarks show this approach is slightly faster on most strings.
 
 Like any proper L<POE::Filter>, there are no POE-specific bits involved here
 -- the filter can be used stand-alone to parse lines of IRC traffic (also see
-L<IRC::Toolkit::Parser>).
+L<IRC::Toolkit::Parser>). 
+
+In fact, you do not need L<POE> installed -- if L<POE::Filter> is not
+available, it is left out of C<@ISA> and the filter will continue working
+normally.
 
 =head2 new
 
@@ -379,6 +382,8 @@ Major thanks to the C<#ircv3> crew on irc.atheme.org, especially C<Aerdan> and
 C<grawity>, for various bits of inspiration.
 
 =head1 SEE ALSO
+
+L<IRC::Message::Object>
 
 L<POE::Filter>
 
