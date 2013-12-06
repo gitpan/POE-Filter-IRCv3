@@ -49,6 +49,11 @@ SYNOPSIS
         Filters => [ $line, $ircd ],
       );
 
+      # Functional parser interface:
+      my $event = POE::Filter::IRCv3::parse_one_line(
+        ':foo PRIVMSG #bar :baz quux'
+      );
+
 DESCRIPTION
     A POE::Filter for IRC traffic with support for IRCv3.2 message tags.
 
@@ -64,19 +69,20 @@ DESCRIPTION
     available, it is left out of @ISA and the filter will continue working
     normally.
 
-  new
+  POE / Object interface
+   new
     Construct a new Filter; if the colonify option is true, the last
     parameter will always have a colon prepended. (This setting can also be
     retrieved or changed on-the-fly by calling colonify as a method, or
     changed for specific events by passing a colonify option via events
     passed to "put".)
 
-  get_one_start, get_one, get_pending
+   get_one_start, get_one, get_pending
     Implement the interface described in POE::Filter.
 
     See "get".
 
-  get
+   get
       my $events = $filter->get( [ $line, $another, ... ] );
       for my $event (@$events) {
         my $cmd = $event->{command};
@@ -101,7 +107,7 @@ DESCRIPTION
 
     Note that a tag can be present, but have an undefined value.
 
-  put
+   put
       my $lines = $filter->put( [ $hash, $another_hash, ... ] );
       for my $line (@$lines) {
         ## Direct to socket, etc
@@ -120,15 +126,32 @@ DESCRIPTION
 
       $filter->put([ { %event, colonify => 1 } ]);
 
-  clone
+   clone
     Copy the filter object (with a cleared buffer).
 
-  debug
+   debug
     Turn on/off debug output, which will display every input/output line
     (and possibly other data in the future).
 
     This is enabled by default at construction time if the environment
     variable "POE_FILTER_IRC_DEBUG" is a true value.
+
+  Functional interface
+   parse_one_line
+    If the filter is being used as a stand-alone IRC parser and speed is of
+    the essence, you can skip method resolution & queue handling by calling
+    the parse function directly using the fully-qualified name:
+
+      my $ev = POE::Filter::IRCv3::parse_one_line( $line );
+
+    The function takes a single line and returns a HASH whose structure is
+    described in the documentation for "get", above.
+
+    If the given line cannot be parsed, the function returns false (rather
+    than throwing an exception, as "get" would).
+
+    There is currently no functional interface to message string composition
+    ("put").
 
 AUTHOR
     Jon Portnoy <avenj@cobaltirc.org>
