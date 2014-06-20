@@ -1,8 +1,7 @@
 package POE::Filter::IRCv3;
-{
-  $POE::Filter::IRCv3::VERSION = '0.046000';
-}
+$POE::Filter::IRCv3::VERSION = '0.047001';
 use strict; use warnings FATAL => 'all';
+
 use Carp;
 
 BEGIN {
@@ -21,6 +20,18 @@ sub COLONIFY () { 0 }
 sub DEBUG    () { 1 }
 sub BUFFER   () { 2 }
 sub SPCHR    () { "\x20" }
+
+our %CharToEscapedTag = (
+  ';'  => '\:',
+  ' '  => '\s',
+  "\0" => '\0',
+  "\\" => '\\',
+  "\r" => '\r',
+  "\n" => '\n',
+  "\a" => '\a',
+);
+
+our %EscapedTagToChar = reverse %CharToEscapedTag;
 
 sub new {
   my ($class, %params) = @_;
@@ -105,7 +116,15 @@ sub put {
       if ( $event->{tags} && (my @tags = %{ $event->{tags} }) ) {
           $raw_line .= '@';
           while (my ($thistag, $thisval) = splice @tags, 0, 2) {
-            $raw_line .= $thistag . ( defined $thisval ? '='.$thisval : '' );
+            $raw_line .= $thistag . ( 
+              defined $thisval ? 
+                '=' . do { 
+                  $thisval =~ s/\Q$_/$CharToEscapedTag{$_}/g
+                    for keys %CharToEscapedTag;
+                  $thisval
+                }
+                : '' 
+            );
             $raw_line .= ';' if @tags;
           }
           $raw_line .= ' ';
@@ -156,10 +175,13 @@ sub parse_one_line {
 
   if ( substr($raw_line, 0, 1) eq '@' ) {
     return unless (my $nextsp = index($raw_line, SPCHR)) > 0;
-    # Tag parser cheats; split takes a pattern:
+    # Tag parser cheats and uses split & s//, at the moment:
     for my $tag_pair 
       ( split /;/, substr $raw_line, 1, ($nextsp - 1) ) {
           my ($thistag, $thisval) = split /=/, $tag_pair;
+          if (defined $thisval) {
+            $thisval =~ s/\Q$_/$EscapedTagToChar{$_}/g for keys %EscapedTagToChar
+          }
           $event{tags}->{$thistag} = $thisval
     }
     $pos = $nextsp + 1;
@@ -225,7 +247,7 @@ unless caller; 1;
 
 =head1 NAME
 
-POE::Filter::IRCv3 - IRCv3.2 parser without regular expressions
+POE::Filter::IRCv3 - Fast IRCv3.2 parser
 
 =head1 SYNOPSIS
 
@@ -285,8 +307,9 @@ POE::Filter::IRCv3 - IRCv3.2 parser without regular expressions
 
 A L<POE::Filter> for IRC traffic with support for IRCv3.2 message tags.
 
-Does not rely on regular expressions for parsing, unlike many of its
-counterparts; benchmarks show this approach is slightly faster on most strings.
+Does not rely on regular expressions for parsing (unless tags are present --
+in which case escaping takes place via regex).  Benchmarks show this approach
+is slightly faster on most strings.
 
 Like any proper L<POE::Filter>, there are no POE-specific bits involved here
 -- the filter can be used stand-alone to parse lines of IRC traffic (also see

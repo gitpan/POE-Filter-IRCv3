@@ -1,10 +1,10 @@
 {
-   "abstract" : "IRCv3.2 parser without regular expressions",
+   "abstract" : "Fast IRCv3.2 parser",
    "author" : [
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 5.006, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 5.017, CPAN::Meta::Converter version 2.141170",
    "license" : [
       "perl_5"
    ],
@@ -41,7 +41,7 @@
       "test" : {
          "recommends" : {
             "CPAN::Meta" : "0",
-            "CPAN::Meta::Requirements" : "0"
+            "CPAN::Meta::Requirements" : "2.120900"
          },
          "requires" : {
             "Scalar::Util" : "0",
@@ -58,6 +58,6 @@
          "web" : "https://github.com/avenj/poe-filter-ircv3"
       }
    },
-   "version" : "0.046000"
+   "version" : "0.047001"
 }
 
