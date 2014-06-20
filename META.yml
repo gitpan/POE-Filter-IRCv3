@@ -22,4 +22,4 @@ requires:
   perl: v5.8.0
 resources:
   repository: git://github.com/avenj/poe-filter-ircv3.git
-version: 0.047001
+version: 0.047002

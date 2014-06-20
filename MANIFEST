@@ -24,4 +24,5 @@ t/release-pod-syntax.t
 t/release-synopsis.t
 t/release-unused-vars.t
 t/v32_escape_tags.t
+tmpbench/put_escapes.pl
 xt/regression_vs_filter_ircd.t
