@@ -16,6 +16,7 @@ use Test::NoTabs;
 
 my @files = (
     'lib/POE/Filter/IRCv3.pm',
+    't/00-report-prereqs.dd',
     't/00-report-prereqs.t',
     't/from_yaml.t',
     't/inc/TestFilterHelpers.pm',

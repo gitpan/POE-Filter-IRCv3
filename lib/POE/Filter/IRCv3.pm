@@ -1,5 +1,5 @@
 package POE::Filter::IRCv3;
-$POE::Filter::IRCv3::VERSION = '0.047002';
+$POE::Filter::IRCv3::VERSION = '1.001001';
 use strict; use warnings FATAL => 'all';
 
 use Carp;
@@ -145,6 +145,7 @@ sub put {
           }
           $raw_line .= ':'
             if (index($param, SPCHR) != -1)
+            or (index($param, ':') == 0)
             or (
               defined $event->{colonify} ?
               $event->{colonify} : $self->[COLONIFY]
@@ -165,7 +166,6 @@ sub put {
 }
 
 
-
 sub parse_one_line {
   my $raw_line = $_[0];
   my %event = ( raw_line => $raw_line );
@@ -179,9 +179,8 @@ sub parse_one_line {
   if ( substr($raw_line, 0, 1) eq '@' ) {
     return unless (my $nextsp = index($raw_line, SPCHR)) > 0;
     # Tag parser cheats and uses split, at the moment:
-    for my $tag_pair 
-      ( split /;/, substr $raw_line, 1, ($nextsp - 1) ) {
-          my ($thistag, $thisval) = split /=/, $tag_pair;
+    for ( split /;/, substr $raw_line, 1, ($nextsp - 1) ) {
+          my ($thistag, $thisval) = split /=/;
           my $realval;
           if (defined $thisval) {
             my $tag_pos = 0;
@@ -265,7 +264,7 @@ unless caller; 1;
 
 =head1 NAME
 
-POE::Filter::IRCv3 - Fast IRCv3.2 parser
+POE::Filter::IRCv3 - Fast IRCv3.2 parser for POE or stand-alone use
 
 =head1 SYNOPSIS
 
@@ -325,9 +324,8 @@ POE::Filter::IRCv3 - Fast IRCv3.2 parser
 
 A L<POE::Filter> for IRC traffic with support for IRCv3.2 message tags.
 
-Does not rely on regular expressions for parsing (unless tags are present --
-in which case escaping takes place via regex).  Benchmarks show this approach
-is slightly faster on most strings.
+Does not rely on regular expressions for parsing.  Benchmarks show this
+approach is generally faster on the most common IRC strings.
 
 Like any proper L<POE::Filter>, there are no POE-specific bits involved here
 -- the filter can be used stand-alone to parse lines of IRC traffic (also see
